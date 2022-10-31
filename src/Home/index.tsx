@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Image, SafeAreaView, ScrollView, TextInput, View } from 'react-native';
+import {Camera, CameraType} from 'expo-camera';
 
 import { Header } from '../components/Header';
 import { Button } from '../components/Button';
@@ -10,6 +11,19 @@ import { POSITIONS, PositionProps } from '../utils/positions';
 
 export function Home() {
   const [positionSelected, setPositionSelected] = useState<PositionProps>(POSITIONS[0]);
+  const [hasCameraPermission, setHasCameraPermission] = useState(false);
+
+  const cameraRef = useRef<Camera>(null) //anotar a referência da câmera
+
+  async function handleTakePicture(){
+    const photo = await cameraRef.current.takePictureAsync();
+    console.log(photo);
+  }
+
+  useEffect(() => {
+    Camera.requestCameraPermissionsAsync() //primeira coisa permitir que o app utilize a câmera
+    .then(response => setHasCameraPermission(response.granted))
+  }, [])
 
   return (
     <SafeAreaView style={styles.container}>
@@ -19,7 +33,16 @@ export function Home() {
 
           <View style={styles.picture}>
 
-            <Image source={{ uri: 'https://github.com/rodrigorgtic.png' }} style={styles.camera} />
+           {
+            hasCameraPermission ? 
+            <Camera
+              ref={cameraRef} 
+              style={styles.camera}
+              type={CameraType.front}
+            /> 
+            :
+            <Image source={{ uri: 'https://filestore.community.support.microsoft.com/api/images/354ad963-3130-4924-b870-71a46b54fb4a?upload=true' }} style={styles.camera} />
+           }
 
             <View style={styles.player}>
               <TextInput
@@ -35,7 +58,7 @@ export function Home() {
           positionSelected={positionSelected}
         />
 
-        <Button title="Compartilhar" />
+        <Button title="Compartilhar" onPress={handleTakePicture} />
       </ScrollView>
     </SafeAreaView>
   );
